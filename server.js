@@ -99,6 +99,8 @@ app.use(
       "https://yashper.com", // frontend (production)
       "https://www.yashper.com", // frontend with www (production)
       "https://admin.yashper.com", // admin dashboard (production)
+      "https://yashper-admin.vercel.app", // frontend on Vercel
+      "https://yashper-admin-ashy.vercel.app", // admin on Vercel
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,

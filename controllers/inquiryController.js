@@ -229,7 +229,7 @@ const sendInquiryReplyEmail = async (inquiry, product, replyMessage, adminName =
           <div style="background: #333; color: white; padding: 20px; border-radius: 0 0 10px 10px; text-align: center;">
             <p style="margin: 0 0 10px 0; font-weight: bold;">Best Regards,<br>${adminName}</p>
             <p style="margin: 0; font-size: 14px; opacity: 0.8;">
-              Yashiper Fashion | Fashion Hub, Main Market, Delhi, India - 110001<br>
+              Yashiper Fashion | FF 06, Global Foyer Mall, Sector 1, Pocket H, Palam Vihar, Gurugram, Haryana - 122017<br>
               Email: yashper9@gmail.com | Phone: +91 98765 43210
             </p>
           </div>

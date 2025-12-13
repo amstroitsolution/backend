@@ -28,13 +28,19 @@ const createAutoInquiry = async (productId, productType, title, description) => 
 // Get all women products
 exports.getAllWomenProducts = async (req, res) => {
   try {
-    const { category, featured } = req.query;
+    const { category, featured, limit } = req.query;
     let query = {};
     
     if (category) query.category = category;
     if (featured) query.featured = featured === 'true';
     
-    const products = await WomenProduct.find(query).sort({ order: 1, createdAt: -1 });
+    let productsQuery = WomenProduct.find(query).sort({ order: 1, createdAt: -1 });
+    
+    if (limit) {
+      productsQuery = productsQuery.limit(parseInt(limit));
+    }
+    
+    const products = await productsQuery;
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -44,12 +50,18 @@ exports.getAllWomenProducts = async (req, res) => {
 // Get active women products
 exports.getActiveWomenProducts = async (req, res) => {
   try {
-    const { category } = req.query;
+    const { category, limit } = req.query;
     let query = { isActive: true };
     
     if (category) query.category = category;
     
-    const products = await WomenProduct.find(query).sort({ order: 1, createdAt: -1 });
+    let productsQuery = WomenProduct.find(query).sort({ order: 1, createdAt: -1 });
+    
+    if (limit) {
+      productsQuery = productsQuery.limit(parseInt(limit));
+    }
+    
+    const products = await productsQuery;
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });

@@ -10,9 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-      
     - name: Deploy to VPS
       uses: appleboy/ssh-action@master
       with:
@@ -21,9 +18,13 @@ jobs:
         password: ${{ secrets.VPS_PASSWORD }}
         port: ${{ secrets.VPS_PORT }}
         script: |
-          cd /domains/api.yashper.com/backend
+          cd /domains/api.yashper.com
+          if [ ! -d "backend" ]; then
+            git clone https://github.com/amstroitsolution/backend.git backend
+          fi
+          cd backend
           git pull origin main
           npm install --production
-          pm2 restart yashper-backend
+          pm2 restart yashper-backend || pm2 start server.js --name yashper-backend
           pm2 save
           echo "Backend deployed successfully!"

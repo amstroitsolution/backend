@@ -10,7 +10,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     
     steps:
     - name: Checkout code
@@ -19,12 +19,13 @@ jobs:
     - name: Create deployment archive
       run: |
         # Exclude node_modules and other unnecessary files
-        tar -czf backend-deploy.tar.gz \
+        tar --warning=no-file-changed -czf backend-deploy.tar.gz \
           --exclude='node_modules' \
           --exclude='.git' \
           --exclude='.env' \
           --exclude='*.log' \
-          .
+          --exclude='.github' \
+          . || [ $? -eq 1 ]
         ls -lh backend-deploy.tar.gz
       
     - name: Deploy to VPS via SCP

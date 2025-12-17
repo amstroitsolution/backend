@@ -1,8 +1,11 @@
-name: Deploy Backend
+name: Deploy Backend to VPS
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, master ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
   workflow_dispatch:
 
 jobs:
@@ -10,21 +13,84 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Deploy to VPS
-      uses: appleboy/ssh-action@master
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Create deployment archive
+      working-directory: ./backend
+      run: |
+        # Exclude node_modules and other unnecessary files
+        tar -czf ../backend-deploy.tar.gz \
+          --exclude='node_modules' \
+          --exclude='.git' \
+          --exclude='.env' \
+          --exclude='*.log' \
+          .
+        cd ..
+        ls -lh backend-deploy.tar.gz
+      
+    - name: Deploy to VPS via SCP
+      uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.VPS_HOST }}
         username: ${{ secrets.VPS_USERNAME }}
-        password: ${{ secrets.VPS_PASSWORD }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        port: ${{ secrets.VPS_PORT }}
+        source: "backend-deploy.tar.gz"
+        target: "/tmp/"
+        
+    - name: Extract and deploy on server
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USERNAME }}
+        key: ${{ secrets.VPS_SSH_KEY }}
         port: ${{ secrets.VPS_PORT }}
         script: |
-          cd /domains/api.yashper.com
-          if [ ! -d "backend" ]; then
-            git clone https://github.com/amstroitsolution/backend.git backend
+          echo "🚀 Starting backend deployment..."
+          
+          # Create backend directory if it doesn't exist
+          mkdir -p /domains/api.yashper.com/backend
+          
+          # Create backup
+          if [ -d "/domains/api.yashper.com/backend" ]; then
+            echo "📦 Creating backup..."
+            tar -czf /tmp/backend-backup-$(date +%Y%m%d-%H%M%S).tar.gz -C /domains/api.yashper.com/backend . 2>/dev/null || true
           fi
-          cd backend
-          git pull origin main
+          
+          # Extract new code
+          echo "📂 Extracting new code..."
+          tar -xzf /tmp/backend-deploy.tar.gz -C /domains/api.yashper.com/backend/
+          
+          # Navigate to backend directory
+          cd /domains/api.yashper.com/backend
+          
+          # Install dependencies
+          echo "📦 Installing dependencies..."
           npm install --production
-          pm2 restart yashper-backend || pm2 start server.js --name yashper-backend
+          
+          # Restart PM2 process
+          echo "🔄 Restarting backend service..."
+          if pm2 list | grep -q "yashper-backend"; then
+            pm2 restart yashper-backend
+          else
+            pm2 start server.js --name yashper-backend
+          fi
+          
           pm2 save
-          echo "Backend deployed successfully!"
+          
+          # Cleanup
+          echo "🧹 Cleaning up..."
+          rm -f /tmp/backend-deploy.tar.gz
+          
+          # Verify deployment
+          echo "✅ Verifying deployment..."
+          sleep 3
+          if pm2 list | grep -q "yashper-backend.*online"; then
+            echo "✅ Backend deployed successfully!"
+            echo "🌐 API: https://api.yashper.com"
+          else
+            echo "❌ Deployment failed - PM2 process not running!"
+            pm2 logs yashper-backend --lines 20
+            exit 1
+          fi

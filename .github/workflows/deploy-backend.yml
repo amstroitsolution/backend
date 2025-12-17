@@ -32,22 +32,22 @@ jobs:
       with:
         host: ${{ secrets.VPS_HOST }}
         username: ${{ secrets.VPS_USERNAME }}
-        key: ${{ secrets.VPS_SSH_KEY }}
+        password: ${{ secrets.VPS_PASSWORD }}
         port: ${{ secrets.VPS_PORT }}
         source: "backend-deploy.tar.gz"
         target: "/tmp/"
-        timeout: 30s
-        command_timeout: 10m
+        timeout: 60s
+        command_timeout: 15m
         
     - name: Extract and deploy on server
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.VPS_HOST }}
         username: ${{ secrets.VPS_USERNAME }}
-        key: ${{ secrets.VPS_SSH_KEY }}
+        password: ${{ secrets.VPS_PASSWORD }}
         port: ${{ secrets.VPS_PORT }}
-        timeout: 30s
-        command_timeout: 10m
+        timeout: 60s
+        command_timeout: 15m
         script: |
           echo "🚀 Starting backend deployment..."
           

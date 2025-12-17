@@ -1,5 +1,6 @@
 const MenuItem = require('../models/MenuItem');
 const SubMenuItem = require('../models/SubMenuItem');
+const SubCategory = require('../models/SubCategory');
 
 // Get all menu items with their submenus
 exports.getAllMenuItems = async (req, res) => {
@@ -24,26 +25,43 @@ exports.getAllMenuItems = async (req, res) => {
   }
 };
 
-// Get active menu items only
+// Get active menu items only (with 3-level support)
 exports.getActiveMenuItems = async (req, res) => {
   try {
     const menuItems = await MenuItem.find({ isActive: true }).sort({ order: 1 });
     const subMenuItems = await SubMenuItem.find({ isActive: true }).sort({ order: 1 });
+    const subCategories = await SubCategory.find({ isActive: true }).sort({ order: 1 });
     
     const menuWithSubmenus = menuItems.map(menu => {
       const submenus = subMenuItems.filter(sub => 
         sub.parentMenuId.toString() === menu._id.toString()
       );
+      
       return {
         _id: menu._id,
         label: menu.label,
         to: menu.link,
         hasDropdown: menu.hasDropdown,
-        dropdown: submenus.map(sub => ({
-          _id: sub._id,
-          name: sub.name,
-          slug: sub.slug
-        }))
+        dropdown: submenus.map(sub => {
+          // Get sub-categories for this submenu
+          const subCats = subCategories.filter(sc => 
+            sc.parentSubmenuId.toString() === sub._id.toString()
+          );
+          
+          return {
+            _id: sub._id,
+            name: sub.name,
+            slug: sub.slug,
+            hasSubCategories: subCats.length > 0,
+            subCategories: subCats.map(sc => ({
+              _id: sc._id,
+              name: sc.name,
+              slug: sc.slug,
+              description: sc.description,
+              image: sc.image
+            }))
+          };
+        })
       };
     });
     
@@ -140,8 +158,71 @@ exports.deleteSubMenu = async (req, res) => {
     if (!submenu) {
       return res.status(404).json({ message: 'Submenu not found' });
     }
+    
+    // Delete all sub-categories if SubCategory model exists
+    try {
+      if (SubCategory) {
+        const deleteResult = await SubCategory.deleteMany({ parentSubmenuId: req.params.id });
+        console.log(`Deleted ${deleteResult.deletedCount} sub-categories`);
+      }
+    } catch (subCatError) {
+      console.log('No sub-categories to delete or model not found:', subCatError.message);
+    }
+    
     await submenu.deleteOne();
     res.json({ message: 'Submenu deleted successfully' });
+  } catch (error) {
+    console.error('Delete submenu error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Get sub-categories for a submenu
+exports.getSubCategories = async (req, res) => {
+  try {
+    const subCategories = await SubCategory.find({ parentSubmenuId: req.params.submenuId }).sort({ order: 1 });
+    res.json(subCategories);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Create sub-category
+exports.createSubCategory = async (req, res) => {
+  try {
+    const subCategory = await SubCategory.create(req.body);
+    res.status(201).json(subCategory);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Update sub-category
+exports.updateSubCategory = async (req, res) => {
+  try {
+    const subCategory = await SubCategory.findById(req.params.id);
+    if (!subCategory) {
+      return res.status(404).json({ message: 'Sub-category not found' });
+    }
+    Object.keys(req.body).forEach(key => {
+      subCategory[key] = req.body[key];
+    });
+    await subCategory.save();
+    res.json(subCategory);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Delete sub-category
+exports.deleteSubCategory = async (req, res) => {
+  try {
+    const subCategory = await SubCategory.findById(req.params.id);
+    if (!subCategory) {
+      return res.status(404).json({ message: 'Sub-category not found' });
+    }
+    await subCategory.deleteOne();
+    res.json({ message: 'Sub-category deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

@@ -28,10 +28,15 @@ const createAutoInquiry = async (productId, productType, title, description) => 
 // Get all women products
 exports.getAllWomenProducts = async (req, res) => {
   try {
-    const { category, featured, limit } = req.query;
+    const { category, categorySlug, featured, limit } = req.query;
     let query = {};
     
-    if (category) query.category = category;
+    // Use regex for category to match partial strings
+    // e.g., "Wedding → Bridal Lehengas" will match
+    if (category) {
+      query.category = { $regex: category.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
+    }
+    if (categorySlug) query.categorySlug = categorySlug;
     if (featured) query.featured = featured === 'true';
     
     let productsQuery = WomenProduct.find(query).sort({ order: 1, createdAt: -1 });
@@ -50,10 +55,11 @@ exports.getAllWomenProducts = async (req, res) => {
 // Get active women products
 exports.getActiveWomenProducts = async (req, res) => {
   try {
-    const { category, limit } = req.query;
+    const { category, categorySlug, limit } = req.query;
     let query = { isActive: true };
     
     if (category) query.category = category;
+    if (categorySlug) query.categorySlug = categorySlug;
     
     let productsQuery = WomenProduct.find(query).sort({ order: 1, createdAt: -1 });
     

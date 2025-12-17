@@ -9,7 +9,11 @@ const {
   getSubMenus,
   createSubMenu,
   updateSubMenu,
-  deleteSubMenu
+  deleteSubMenu,
+  getSubCategories,
+  createSubCategory,
+  updateSubCategory,
+  deleteSubCategory
 } = require('../controllers/menuController');
 const protect = require('../middleware/auth');
 
@@ -27,5 +31,11 @@ router.delete('/:id', protect, deleteMenuItem);
 router.post('/submenus', protect, createSubMenu);
 router.put('/submenus/:id', protect, updateSubMenu);
 router.delete('/submenus/:id', protect, deleteSubMenu);
+
+// Protected routes - Sub-categories (3rd level)
+router.get('/:submenuId/subcategories', getSubCategories);
+router.post('/subcategories', protect, createSubCategory);
+router.put('/subcategories/:id', protect, updateSubCategory);
+router.delete('/subcategories/:id', protect, deleteSubCategory);
 
 module.exports = router;

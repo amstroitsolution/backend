@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const path = require('path');
 const MenuItem = require('../models/MenuItem');
 const SubMenuItem = require('../models/SubMenuItem');
 
-dotenv.config({ path: '../.env' });
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const seedMenu = async () => {
   try {
@@ -24,9 +25,9 @@ const seedMenu = async () => {
       isActive: true
     });
 
-    const dressesMenu = await MenuItem.create({
-      label: 'Dresses',
-      link: '/dresses',
+    const womenProductsMenu = await MenuItem.create({
+      label: 'Women Products',
+      link: '/women-products',
       hasDropdown: true,
       order: 2,
       isActive: true
@@ -58,18 +59,28 @@ const seedMenu = async () => {
 
     console.log('✅ Created main menu items');
 
-    // Create submenu items for Dresses
-    const dressesSubmenus = [
-      { name: 'Gown and Dresses', slug: 'gown-and-dresses', order: 1 },
-      { name: 'Insta Sarees', slug: 'insta-sarees', order: 2 },
-      { name: 'Lehenga', slug: 'lehenga', order: 3 },
-      { name: 'Kurti', slug: 'kurti', order: 4 },
-      { name: 'Sharara', slug: 'sharara', order: 5 }
+    // Create submenu items for Women Products (comprehensive categories)
+    const womenProductsSubmenus = [
+      { name: 'Dresses', slug: 'dresses', order: 1 },
+      { name: 'Gown and Dresses', slug: 'gown-and-dresses', order: 2 },
+      { name: 'Sets', slug: 'sets', order: 3 },
+      { name: 'Bottoms', slug: 'bottoms', order: 4 },
+      { name: 'Kurtas', slug: 'kurtas', order: 5 },
+      { name: 'Kurti', slug: 'kurti', order: 6 },
+      { name: 'Insta Sarees', slug: 'insta-sarees', order: 7 },
+      { name: 'Saree Collections', slug: 'saree-collections', order: 8 },
+      { name: 'Lehenga', slug: 'lehenga', order: 9 },
+      { name: 'Lehenga Collections', slug: 'lehenga-collections', order: 10 },
+      { name: 'Sharara', slug: 'sharara', order: 11 },
+      { name: 'Wedding', slug: 'wedding', order: 12 },
+      { name: 'Party Wear', slug: 'party-wear', order: 13 },
+      { name: 'Casual Wear', slug: 'casual-wear', order: 14 },
+      { name: 'Ethnic Wear', slug: 'ethnic-wear', order: 15 }
     ];
 
-    for (const submenu of dressesSubmenus) {
+    for (const submenu of womenProductsSubmenus) {
       await SubMenuItem.create({
-        parentMenuId: dressesMenu._id,
+        parentMenuId: womenProductsMenu._id,
         name: submenu.name,
         slug: submenu.slug,
         order: submenu.order,
@@ -77,7 +88,7 @@ const seedMenu = async () => {
       });
     }
 
-    console.log('✅ Created submenu items for Dresses');
+    console.log('✅ Created submenu items for Women Products');
     console.log('🎉 Menu seeding completed successfully!');
     
     process.exit(0);

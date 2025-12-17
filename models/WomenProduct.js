@@ -13,57 +13,13 @@ const womenProductSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: [
-      // Dresses
-      'Gown & Dresses',
-      'Insta Sarees',
-      'Jumpsuits',
-      
-      // Sets
-      '2 Pcs Kurta Sets',
-      '3 Pcs Kurta Sets',
-      'Anarkali Sets',
-      'A-Line Sets',
-      'Straight Suit Sets',
-      'Sharara Sets',
-      'Coord Sets',
-      'Plus Size Suit Sets',
-      
-      // Bottoms
-      'Trouser & Pants',
-      'Salwar & Leggings',
-      'Palazzos & Culottes',
-      'Sharara',
-      'Skirts',
-      'Jeggings',
-      'Plus Size Bottoms',
-      
-      // Kurtas
-      'A-Line Kurta',
-      'Straight Kurtas',
-      'Flared Kurtas',
-      'Asymmetrical Kurta',
-      'Winter Kurta',
-      'Plus Size Kurta',
-      
-      // Saree Collections
-      'Silk Sarees',
-      'Cotton Sarees',
-      'Designer Sarees',
-      'Party Wear Sarees',
-      'Casual Sarees',
-      'Bridal Sarees',
-      
-      // Lehenga Collections
-      'Bridal Lehengas',
-      'Party Wear Lehengas',
-      'Designer Lehengas',
-      'Casual Lehengas',
-      'Festive Lehengas',
-      
-      // Others
-      'Wedding Collection'
-    ]
+    trim: true
+  },
+  categorySlug: {
+    type: String,
+    required: true,
+    trim: true,
+    index: true
   },
   images: [{
     type: String

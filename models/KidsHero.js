@@ -10,9 +10,23 @@ const kidsHeroSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  description: {
+    type: String,
+    trim: true
+  },
   image: {
     type: String,
     required: [true, 'Please provide an image']
+  },
+  ctaText: {
+    type: String,
+    default: 'Shop Now',
+    trim: true
+  },
+  ctaLink: {
+    type: String,
+    default: '/kids',
+    trim: true
   },
   order: {
     type: Number,

@@ -15,7 +15,7 @@ const createAutoInquiry = async (productId, productType, title, description) => 
       message: description,
       status: 'pending'
     });
-    
+
     await autoInquiry.save();
     console.log(`Auto-inquiry created: ${title}`);
     return autoInquiry;
@@ -30,7 +30,7 @@ exports.getAllWomenProducts = async (req, res) => {
   try {
     const { category, categorySlug, featured, limit } = req.query;
     let query = {};
-    
+
     // Use regex for category to match partial strings
     // e.g., "Wedding → Bridal Lehengas" will match
     if (category) {
@@ -38,13 +38,13 @@ exports.getAllWomenProducts = async (req, res) => {
     }
     if (categorySlug) query.categorySlug = categorySlug;
     if (featured) query.featured = featured === 'true';
-    
+
     let productsQuery = WomenProduct.find(query).sort({ order: 1, createdAt: -1 });
-    
+
     if (limit) {
       productsQuery = productsQuery.limit(parseInt(limit));
     }
-    
+
     const products = await productsQuery;
     res.json(products);
   } catch (error) {
@@ -57,16 +57,16 @@ exports.getActiveWomenProducts = async (req, res) => {
   try {
     const { category, categorySlug, limit } = req.query;
     let query = { isActive: true };
-    
+
     if (category) query.category = category;
     if (categorySlug) query.categorySlug = categorySlug;
-    
+
     let productsQuery = WomenProduct.find(query).sort({ order: 1, createdAt: -1 });
-    
+
     if (limit) {
       productsQuery = productsQuery.limit(parseInt(limit));
     }
-    
+
     const products = await productsQuery;
     res.json(products);
   } catch (error) {
@@ -96,7 +96,7 @@ exports.createWomenProduct = async (req, res) => {
     }
 
     const productData = { ...req.body };
-    
+
     // Handle file uploads
     if (req.files && req.files.length > 0) {
       productData.images = req.files.map(file => `/uploads/women/${file.filename}`);
@@ -104,10 +104,10 @@ exports.createWomenProduct = async (req, res) => {
 
     // Parse arrays if they come as strings
     if (typeof productData.sizes === 'string') {
-      productData.sizes = JSON.parse(productData.sizes);
+      try { productData.sizes = JSON.parse(productData.sizes); } catch (e) { productData.sizes = productData.sizes.split(',').filter(Boolean); }
     }
     if (typeof productData.colors === 'string') {
-      productData.colors = JSON.parse(productData.colors);
+      try { productData.colors = JSON.parse(productData.colors); } catch (e) { productData.colors = productData.colors.split(',').filter(Boolean); }
     }
 
     const product = new WomenProduct(productData);
@@ -120,7 +120,7 @@ exports.createWomenProduct = async (req, res) => {
       `New Women Product: ${product.title}`,
       `Auto-generated inquiry for new women product "${product.title}". Category: ${product.category || 'Not specified'}, Price: ₹${product.price || 'Not specified'}. Created on ${new Date().toLocaleDateString()}. This product may need review or additional setup.`
     );
-    
+
     res.status(201).json({ message: 'Women product created successfully', product });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -141,28 +141,42 @@ exports.updateWomenProduct = async (req, res) => {
     }
 
     const updateData = { ...req.body };
-    
+
+    // Handle existing images
+    let currentImages = [];
+    if (req.body.existingImages) {
+      currentImages = JSON.parse(req.body.existingImages);
+    }
+
+    // Identify images to delete
+    if (product.images && product.images.length > 0) {
+      const removedImages = product.images.filter(img => !currentImages.includes(img));
+      removedImages.forEach(img => {
+        const imgPath = path.join(process.cwd(), img);
+        if (fs.existsSync(imgPath)) {
+          fs.unlinkSync(imgPath);
+        }
+      });
+    }
+
     // Handle new file uploads
     if (req.files && req.files.length > 0) {
-      // Delete old images
-      if (product.images && product.images.length > 0) {
-        product.images.forEach(img => {
-          const imgPath = path.join(__dirname, '..', img);
-          if (fs.existsSync(imgPath)) {
-            fs.unlinkSync(imgPath);
-          }
-        });
-      }
-      updateData.images = req.files.map(file => `/uploads/women/${file.filename}`);
+      const newImages = req.files.map(file => `/uploads/women/${file.filename}`);
+      currentImages = [...currentImages, ...newImages];
     }
+
+    updateData.images = currentImages;
 
     // Parse arrays if they come as strings
     if (typeof updateData.sizes === 'string') {
-      updateData.sizes = JSON.parse(updateData.sizes);
+      try { updateData.sizes = JSON.parse(updateData.sizes); } catch (e) { updateData.sizes = updateData.sizes.split(',').filter(Boolean); }
     }
     if (typeof updateData.colors === 'string') {
-      updateData.colors = JSON.parse(updateData.colors);
+      try { updateData.colors = JSON.parse(updateData.colors); } catch (e) { updateData.colors = updateData.colors.split(',').filter(Boolean); }
     }
+
+    // Remove existingImages from updateData so it doesn't get saved as a field
+    delete updateData.existingImages;
 
     const updatedProduct = await WomenProduct.findByIdAndUpdate(
       req.params.id,

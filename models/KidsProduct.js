@@ -17,7 +17,13 @@ const kidsProductSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    required: true
+    required: true,
+    trim: true
+  },
+  categorySlug: {
+    type: String,
+    trim: true,
+    index: true
   },
   images: [{
     type: String
@@ -25,15 +31,34 @@ const kidsProductSchema = new mongoose.Schema({
   price: {
     type: Number
   },
+  originalPrice: {
+    type: Number
+  },
+  discount: {
+    type: Number,
+    default: 0
+  },
   sizes: [{
     type: String
   }],
   colors: [{
     type: String
   }],
+  material: {
+    type: String,
+    trim: true
+  },
   ageGroup: {
     type: String,
     enum: ['0-2 years', '2-4 years', '4-6 years', '6-8 years', '8-10 years', '10-12 years', '12-14 years']
+  },
+  stock: {
+    type: Number,
+    default: 0
+  },
+  badge: {
+    type: String,
+    trim: true
   },
   featured: {
     type: Boolean,
@@ -46,7 +71,11 @@ const kidsProductSchema = new mongoose.Schema({
   order: {
     type: Number,
     default: 0
-  }
+  },
+  tags: [{
+    type: String,
+    trim: true
+  }]
 }, {
   timestamps: true
 });

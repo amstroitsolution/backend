@@ -21,15 +21,37 @@ const seedEssentialData = async () => {
     await Hero.deleteMany({});
     await Hero.create([
       {
-        title: 'Welcome to Yashper',
-        subtitle: 'Discover Your Style',
-        description: 'Explore our latest collection of elegant dresses',
+        title: 'Elevating Textile Stitching Across India',
+        subtitle: 'Welcome to Goodluck',
+        description: 'Precision craftsmanship meets modern innovation in textile manufacturing',
         backgroundImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1920',
-        ctaText: 'Shop Now',
-        ctaLink: '/dresses',
+        ctaText: 'Meet With Us',
+        ctaLink: '/contact',
         isActive: true,
         order: 1,
-        altText: 'Welcome to Yashper - Fashion Collection'
+        altText: 'Goodluck Textile Manufacturing'
+      },
+      {
+        title: 'Precision, Quality & Excellence',
+        subtitle: 'Our Commitment',
+        description: 'Delivering premium quality textile solutions with cutting-edge technology',
+        backgroundImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1920',
+        ctaText: 'Discover More',
+        ctaLink: '/about',
+        isActive: true,
+        order: 2,
+        altText: 'Quality Textile Solutions'
+      },
+      {
+        title: 'Empowering Fashion Manufacturing',
+        subtitle: 'Innovation Driven',
+        description: 'Transforming the textile industry with modern solutions',
+        backgroundImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1920',
+        ctaText: 'Our Services',
+        ctaLink: '/services',
+        isActive: true,
+        order: 3,
+        altText: 'Fashion Manufacturing Innovation'
       }
     ]);
     console.log('✅ Hero seeded\n');

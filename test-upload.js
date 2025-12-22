@@ -13,7 +13,7 @@ const fs = require("fs");
     
     form.append("image", fs.createReadStream("C:\\Users\\rajan\\Desktop\\Om Hospital.jpg"));
 
-    const res = await axios.post("http://localhost:5000/api/equipment", form, {
+    const res = await axios.post("https://api.yashper.com//api/equipment", form, {
       headers: form.getHeaders(),
       maxBodyLength: Infinity,
       maxContentLength: Infinity,

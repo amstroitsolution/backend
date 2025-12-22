@@ -44,15 +44,32 @@ exports.getKidsHeroById = async (req, res) => {
 // @access  Private/Admin
 exports.createKidsHero = async (req, res) => {
   try {
-    // Handle file upload if present
+    console.log('📝 Creating kids hero slide...');
+    console.log('Request body:', req.body);
+    console.log('Uploaded file:', req.file);
+    
+    // Handle Cloudinary file upload
     if (req.file) {
-      req.body.image = `/uploads/${req.file.filename}`;
+      req.body.image = req.file.path; // Cloudinary URL
+      console.log('✅ Cloudinary image URL:', req.body.image);
+    } else {
+      console.log('⚠️ No file uploaded');
     }
     
     const slide = await KidsHero.create(req.body);
+    console.log('✅ Kids hero slide created:', slide._id);
     res.status(201).json(slide);
   } catch (error) {
-    res.status(400).json({ message: 'Error creating kids hero slide', error: error.message });
+    console.error('❌ Error creating kids hero slide:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      message: 'Error creating kids hero slide', 
+      error: error.message,
+      details: error.errors ? Object.keys(error.errors).map(key => ({
+        field: key,
+        message: error.errors[key].message
+      })) : null
+    });
   }
 };
 
@@ -61,9 +78,10 @@ exports.createKidsHero = async (req, res) => {
 // @access  Private/Admin
 exports.updateKidsHero = async (req, res) => {
   try {
-    // Handle file upload if present
+    // Handle Cloudinary file upload
     if (req.file) {
-      req.body.image = `/uploads/${req.file.filename}`;
+      req.body.image = req.file.path; // Cloudinary URL
+      console.log('✅ Updated Cloudinary image URL:', req.body.image);
     }
     
     const slide = await KidsHero.findByIdAndUpdate(
@@ -76,6 +94,7 @@ exports.updateKidsHero = async (req, res) => {
     }
     res.status(200).json(slide);
   } catch (error) {
+    console.error('Error updating kids hero slide:', error);
     res.status(400).json({ message: 'Error updating kids hero slide', error: error.message });
   }
 };

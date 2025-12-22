@@ -10,7 +10,8 @@
     "seed:our-values": "node seed/ourValuesSeed.js",
     "seed:slow-fashion": "node seed/slowFashionSeed.js",
     "seed:hero": "node seed/heroSeed.js",
-    "seed:all": "node seed/seedAllData.js"
+    "seed:all": "node seed/seedAllData.js",
+    "seed:kids": "node scripts/seedKidsProducts.js"
   },
   "keywords": [],
   "author": "",
@@ -19,7 +20,7 @@
   "dependencies": {
     "axios": "^1.12.2",
     "bcryptjs": "^3.0.2",
-    "cloudinary": "^2.7.0",
+    "cloudinary": "^2.8.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
@@ -29,6 +30,7 @@
     "mongodb": "^6.20.0",
     "mongoose": "^8.19.0",
     "multer": "^2.0.2",
+    "multer-storage-cloudinary": "^4.0.0",
     "nodemailer": "^7.0.10"
   }
 }

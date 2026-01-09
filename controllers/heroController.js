@@ -45,14 +45,14 @@ exports.createHero = async (req, res) => {
     }
 
     const heroData = { ...req.body };
-    
+
     // Handle file uploads
     if (req.files) {
       if (req.files.backgroundImage && req.files.backgroundImage[0]) {
-        heroData.backgroundImage = `/uploads/hero/${req.files.backgroundImage[0].filename}`;
+        heroData.backgroundImage = req.files.backgroundImage[0].path;
       }
       if (req.files.backgroundVideo && req.files.backgroundVideo[0]) {
-        heroData.backgroundVideo = `/uploads/hero/${req.files.backgroundVideo[0].filename}`;
+        heroData.backgroundVideo = req.files.backgroundVideo[0].path;
       }
     }
 
@@ -78,29 +78,29 @@ exports.updateHero = async (req, res) => {
     }
 
     const updateData = { ...req.body };
-    
+
     // Handle new file uploads
     if (req.files) {
       if (req.files.backgroundImage && req.files.backgroundImage[0]) {
-        // Delete old image
-        if (hero.backgroundImage) {
-          const oldPath = path.join(__dirname, '..', hero.backgroundImage);
+        // Delete old image (local only)
+        if (hero.backgroundImage && hero.backgroundImage.startsWith('/uploads/')) {
+          const oldPath = path.join(process.cwd(), hero.backgroundImage);
           if (fs.existsSync(oldPath)) {
-            fs.unlinkSync(oldPath);
+            try { fs.unlinkSync(oldPath); } catch (e) { console.error('Local delete failed:', e); }
           }
         }
-        updateData.backgroundImage = `/uploads/hero/${req.files.backgroundImage[0].filename}`;
+        updateData.backgroundImage = req.files.backgroundImage[0].path;
       }
-      
+
       if (req.files.backgroundVideo && req.files.backgroundVideo[0]) {
-        // Delete old video
-        if (hero.backgroundVideo) {
-          const oldPath = path.join(__dirname, '..', hero.backgroundVideo);
+        // Delete old video (local only)
+        if (hero.backgroundVideo && hero.backgroundVideo.startsWith('/uploads/')) {
+          const oldPath = path.join(process.cwd(), hero.backgroundVideo);
           if (fs.existsSync(oldPath)) {
-            fs.unlinkSync(oldPath);
+            try { fs.unlinkSync(oldPath); } catch (e) { console.error('Local delete failed:', e); }
           }
         }
-        updateData.backgroundVideo = `/uploads/hero/${req.files.backgroundVideo[0].filename}`;
+        updateData.backgroundVideo = req.files.backgroundVideo[0].path;
       }
     }
 
@@ -124,17 +124,17 @@ exports.deleteHero = async (req, res) => {
       return res.status(404).json({ message: 'Hero slide not found' });
     }
 
-    // Delete associated files
-    if (hero.backgroundImage) {
-      const imgPath = path.join(__dirname, '..', hero.backgroundImage);
+    // Delete associated files (local only)
+    if (hero.backgroundImage && hero.backgroundImage.startsWith('/uploads/')) {
+      const imgPath = path.join(process.cwd(), hero.backgroundImage);
       if (fs.existsSync(imgPath)) {
-        fs.unlinkSync(imgPath);
+        try { fs.unlinkSync(imgPath); } catch (e) { console.error('Local delete failed:', e); }
       }
     }
-    if (hero.backgroundVideo) {
-      const videoPath = path.join(__dirname, '..', hero.backgroundVideo);
+    if (hero.backgroundVideo && hero.backgroundVideo.startsWith('/uploads/')) {
+      const videoPath = path.join(process.cwd(), hero.backgroundVideo);
       if (fs.existsSync(videoPath)) {
-        fs.unlinkSync(videoPath);
+        try { fs.unlinkSync(videoPath); } catch (e) { console.error('Local delete failed:', e); }
       }
     }
 

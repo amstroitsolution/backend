@@ -14,7 +14,7 @@ const createAutoInquiry = async (productId, productType, title, description) => 
       message: description,
       status: 'pending'
     });
-    
+
     await autoInquiry.save();
     console.log(`Auto-inquiry created: ${title}`);
     return autoInquiry;
@@ -33,9 +33,21 @@ exports.getAll = async (req, res) => {
   }
 };
 
+exports.getById = async (req, res) => {
+  try {
+    const item = await NewArrival.findById(req.params.id);
+    if (!item) {
+      return res.status(404).json({ error: 'New Arrival not found' });
+    }
+    res.json(item);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 exports.create = async (req, res) => {
   try {
-    const images = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
+    const images = req.files ? req.files.map(f => f.path || f.url) : [];
     const item = new NewArrival({ ...req.body, images });
     await item.save();
 
@@ -55,10 +67,10 @@ exports.create = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    const newImages = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
+    const newImages = req.files ? req.files.map(f => f.path || f.url) : [];
     const existingImages = req.body.existingImages ? JSON.parse(req.body.existingImages) : [];
     const images = [...existingImages, ...newImages];
-    
+
     const item = await NewArrival.findByIdAndUpdate(
       req.params.id,
       { ...req.body, images },
@@ -75,8 +87,12 @@ exports.delete = async (req, res) => {
     const item = await NewArrival.findById(req.params.id);
     if (item && item.images) {
       item.images.forEach(img => {
-        const filePath = path.join(__dirname, '..', img);
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        if (img.startsWith('/uploads/')) {
+          const filePath = path.join(process.cwd(), img);
+          if (fs.existsSync(filePath)) {
+            try { fs.unlinkSync(filePath); } catch (e) { console.error('Local delete failed:', e); }
+          }
+        }
       });
     }
     await NewArrival.findByIdAndDelete(req.params.id);

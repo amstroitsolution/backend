@@ -8,6 +8,8 @@ const path = require("path");
  */
 function toAbsolute(relPath) {
   if (!relPath) return null;
+  // If it's a full URL (Cloudinary), don't attempt to resolve it to a local path
+  if (relPath.startsWith('http')) return null;
   const cleaned = relPath.replace(/^\//, "").replace(/\//g, path.sep);
   return path.join(process.cwd(), cleaned);
 }

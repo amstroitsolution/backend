@@ -6,7 +6,7 @@ import fs from "fs";
 export const addGalleryItem = async (req, res) => {
   try {
     const { title, description, details, rightSection } = req.body;
-    const image = req.file ? `/uploads/${req.file.filename}` : null;
+    const image = req.file ? req.file.path : null;
 
     if (!image) {
       return res.status(400).json({ message: "Image is required" });
@@ -60,7 +60,7 @@ export const updateGallery = async (req, res) => {
 
     // Agar naya image upload hua hai
     if (req.file) {
-      updateData.image = `/uploads/${req.file.filename}`;
+      updateData.image = req.file.path;
     }
 
     const updated = await Gallery.findByIdAndUpdate(req.params.id, updateData, { new: true });
@@ -84,10 +84,11 @@ export const deleteGallery = async (req, res) => {
       return res.status(404).json({ message: "Gallery item not found" });
     }
 
-    // ❗ Fix: image path banate waqt "backend" mat jodo
-    const imgPath = path.join(process.cwd(), item.image);
-    if (fs.existsSync(imgPath)) {
-      fs.unlinkSync(imgPath);
+    if (item.image && item.image.startsWith('/uploads/')) {
+      const imgPath = path.join(process.cwd(), item.image);
+      if (fs.existsSync(imgPath)) {
+        try { fs.unlinkSync(imgPath); } catch (e) { console.error('Local delete failed:', e); }
+      }
     }
 
     await item.deleteOne();

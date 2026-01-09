@@ -10,22 +10,13 @@ import {
 
 const router = express.Router();
 
-// 📂 Multer setup for image upload
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/"); // relative to project root
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
-const upload = multer({ storage });
+import { uploadGallery } from "../middleware/upload";
 
 // ✅ Routes
-router.post("/add", upload.single("image"), addGalleryItem);
+router.post("/add", uploadGallery.single("image"), addGalleryItem);
 router.get("/", getAllGallery);
 router.get("/:id", getSingleGallery);
-router.put("/:id", upload.single("image"), updateGallery);
+router.put("/:id", uploadGallery.single("image"), updateGallery);
 router.delete("/:id", deleteGallery);
 
 export default router;

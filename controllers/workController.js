@@ -11,10 +11,8 @@ exports.createWork = async (req, res, next) => {
   try {
     const { title, shortDescription, longDescription, category, featured, order, active } = req.body;
 
-    // convert uploaded images to relative paths
-    const images = (req.files || []).map((f) =>
-      path.join("/", process.env.UPLOAD_DIR || "uploads", "works", f.filename).replace(/\\/g, "/")
-    );
+    // Use Cloudinary path
+    const images = (req.files || []).map((f) => f.path);
 
     if (!title) return res.status(400).json({ message: "Title is required" });
 
@@ -92,10 +90,8 @@ exports.updateWork = async (req, res, next) => {
     if (order !== undefined) work.order = Number(order);
     if (active !== undefined) work.active = active === "true" || active === true;
 
-    // Add newly uploaded images
-    const newImages = (req.files || []).map((f) =>
-      path.join("/", process.env.UPLOAD_DIR || "uploads", "works", f.filename).replace(/\\/g, "/")
-    );
+    // Use Cloudinary path
+    const newImages = (req.files || []).map((f) => f.path);
     if (newImages.length) work.images = (work.images || []).concat(newImages);
 
     // Remove images if requested

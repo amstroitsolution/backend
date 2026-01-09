@@ -30,7 +30,7 @@ fi
 cd frontend-repo
 git pull origin main
 npm install
-VITE_API_BASE_URL=https://api.yashper.com npm run build
+VITE_API_BASE_URL=http://localhost:5000/ npm run build
 rm -rf /domains/yashper.com/public_html/*
 cp -r dist/* /domains/yashper.com/public_html/
 chown -R www-data:www-data /domains/yashper.com/public_html
@@ -47,7 +47,7 @@ fi
 cd admin-repo
 git pull origin main
 npm install
-VITE_API_BASE_URL=https://api.yashper.com npm run build
+VITE_API_BASE_URL=http://localhost:5000/ npm run build
 rm -rf /domains/admin.yashper.com/public_html/*
 cp -r dist/* /domains/admin.yashper.com/public_html/
 chown -R www-data:www-data /domains/admin.yashper.com/public_html
@@ -62,4 +62,4 @@ echo ""
 echo "Your sites are live at:"
 echo "  Frontend: https://yashper.com"
 echo "  Admin: https://admin.yashper.com"
-echo "  API: https://api.yashper.com"
+echo "  API: http://localhost:5000/"

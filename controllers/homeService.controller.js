@@ -41,7 +41,7 @@ exports.create = async (req, res) => {
 
     const slug = slugify(title);
     const mediaUrl = req.file
-      ? `/uploads/${req.file.filename}`
+      ? req.file.path
       : req.body.mediaUrl || "";
 
     const newItem = new HomeService({
@@ -67,7 +67,7 @@ exports.update = async (req, res) => {
   try {
     const id = req.params.id;
     const payload = { ...req.body };
-    if (req.file) payload.mediaUrl = `/uploads/${req.file.filename}`;
+    if (req.file) payload.mediaUrl = req.file.path;
     const updated = await HomeService.findByIdAndUpdate(id, payload, {
       new: true,
     });

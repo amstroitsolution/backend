@@ -91,7 +91,7 @@ jobs:
           sleep 3
           if pm2 list | grep -q "yashper-backend.*online"; then
             echo "✅ Backend deployed successfully!"
-            echo "🌐 API: https://api.yashper.com"
+            echo "🌐 API: http://localhost:5000/"
           else
             echo "❌ Deployment failed - PM2 process not running!"
             pm2 logs yashper-backend --lines 20

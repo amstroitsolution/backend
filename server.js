@@ -1,5 +1,9 @@
 const express = require("express");
 const dotenv = require("dotenv");
+
+// ⚠️ CRITICAL: Load environment variables FIRST before ANY other imports!
+dotenv.config();
+
 const cors = require("cors");
 const connectDB = require("./config/db");
 const path = require("path");
@@ -70,6 +74,9 @@ const shopCategoriesRoutes = require("./routes/shopCategories");
 // NEW: Menu/Navbar route
 const menuRoutes = require("./routes/menu");
 
+// NEW: Search route
+const searchRoutes = require("./routes/search");
+
 // NEW: Testimonials route
 const testimonialsRoutes = require("./routes/testimonials");
 
@@ -82,7 +89,7 @@ const faqsRoutes = require("./routes/faqs");
 // NEW: Kids Hero route
 const kidsHeroRoutes = require("./routes/kidsHero");
 
-dotenv.config({ path: "./.env" });
+// Environment variables already loaded at top of file
 
 if (!process.env.MONGO_URI) {
   console.error("❌ Missing MONGO_URI in environment. Set it in .env");
@@ -96,6 +103,8 @@ app.use(
     origin: [
       "http://localhost:5173", // frontend (local)
       "http://localhost:5174", // admin dashboard (local)
+      "http://127.0.0.1:5173",
+      "http://127.0.0.1:5174",
       "https://yashper.com", // frontend (production)
       "https://www.yashper.com", // frontend with www (production)
       "https://admin.yashper.com", // admin dashboard (production)
@@ -204,6 +213,10 @@ console.log("✅ Shop Categories route mounted");
 // ✅ NEW: Menu/Navbar route
 app.use("/api/menu", menuRoutes);
 console.log("✅ Menu/Navbar route mounted");
+
+// ✅ NEW: Search route
+app.use("/api/search", searchRoutes);
+console.log("✅ Search route mounted");
 
 // ✅ NEW: Testimonials route
 app.use("/api/testimonials", testimonialsRoutes);

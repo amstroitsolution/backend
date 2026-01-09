@@ -158,7 +158,7 @@ const sendInquiryReplyEmail = async (inquiry, product, replyMessage, adminName =
       if (productImage.startsWith('http')) {
         imageUrl = productImage;
       } else {
-        imageUrl = `${process.env.BASE_URL || 'https://api.yashper.com/'}${productImage}`;
+        imageUrl = `${process.env.BASE_URL || 'http://localhost:5000/'}${productImage}`;
       }
     }
     
@@ -272,7 +272,7 @@ const sendInquiryEmails = async (inquiry, product, productData = null) => {
     if (productImage.startsWith('http')) {
       imageUrl = productImage; // External URL
     } else {
-      imageUrl = `${process.env.BASE_URL || 'https://api.yashper.com/'}${productImage}`; // Local image
+      imageUrl = `${process.env.BASE_URL || 'http://localhost:5000/'}${productImage}`; // Local image
     }
   }
   

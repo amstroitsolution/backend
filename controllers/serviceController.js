@@ -28,7 +28,7 @@ exports.getActiveServices = async (req, res) => {
 exports.createService = async (req, res) => {
   try {
     const { title, description, order, isActive } = req.body;
-    
+
     const serviceData = {
       title,
       description,
@@ -37,7 +37,7 @@ exports.createService = async (req, res) => {
     };
 
     if (req.file) {
-      serviceData.image = `/uploads/services/${req.file.filename}`;
+      serviceData.image = req.file.path;
     }
 
     const service = await Service.create(serviceData);
@@ -64,14 +64,14 @@ exports.updateService = async (req, res) => {
     service.isActive = isActive !== undefined ? isActive : service.isActive;
 
     if (req.file) {
-      // Delete old image if exists
-      if (service.image) {
-        const oldImagePath = path.join(__dirname, '..', service.image);
+      // Delete old image if exists (local only)
+      if (service.image && service.image.startsWith('/uploads/')) {
+        const oldImagePath = path.join(process.cwd(), service.image);
         if (fs.existsSync(oldImagePath)) {
-          fs.unlinkSync(oldImagePath);
+          try { fs.unlinkSync(oldImagePath); } catch (e) { console.error('Local delete failed:', e); }
         }
       }
-      service.image = `/uploads/services/${req.file.filename}`;
+      service.image = req.file.path;
     }
 
     await service.save();
@@ -91,11 +91,11 @@ exports.deleteService = async (req, res) => {
       return res.status(404).json({ message: 'Service not found' });
     }
 
-    // Delete image if exists
-    if (service.image) {
-      const imagePath = path.join(__dirname, '..', service.image);
+    // Delete image if exists (local only)
+    if (service.image && service.image.startsWith('/uploads/')) {
+      const imagePath = path.join(process.cwd(), service.image);
       if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
+        try { fs.unlinkSync(imagePath); } catch (e) { console.error('Local delete failed:', e); }
       }
     }
 

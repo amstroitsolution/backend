@@ -13,33 +13,17 @@ try {
   auth = (req, res, next) => next();
 }
 
-// ensure uploads folder exists
-const fs = require("fs");
-const uploadDir = path.join(process.cwd(), "uploads", "watchbuy");
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
-// multer disk storage
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const name = Date.now() + "-" + file.originalname.replace(/\s+/g, "-");
-    cb(null, name);
-  },
-});
-
-const upload = multer({ storage });
+const { uploadWatchBuy } = require("../middleware/upload");
 
 // routes
 router.get("/", controller.getAll);
 router.get("/:id", controller.getById);
 
 // POST: add new (media required)
-router.post("/", auth, upload.fields([{ name: "media", maxCount: 1 }, { name: "thumbnail", maxCount: 1 }]), controller.create);
+router.post("/", auth, uploadWatchBuy.fields([{ name: "media", maxCount: 1 }, { name: "thumbnail", maxCount: 1 }]), controller.create);
 
 // PUT: update (optional files)
-router.put("/:id", auth, upload.fields([{ name: "media", maxCount: 1 }, { name: "thumbnail", maxCount: 1 }]), controller.update);
+router.put("/:id", auth, uploadWatchBuy.fields([{ name: "media", maxCount: 1 }, { name: "thumbnail", maxCount: 1 }]), controller.update);
 
 // DELETE
 router.delete("/:id", auth, controller.remove);

@@ -15,7 +15,7 @@ const createAutoInquiry = async (productId, productType, title, description) => 
       message: description,
       status: 'pending'
     });
-    
+
     await autoInquiry.save();
     console.log(`Auto-inquiry created: ${title}`);
     return autoInquiry;
@@ -30,11 +30,11 @@ exports.getAllKidsProducts = async (req, res) => {
   try {
     const { category, gender, featured } = req.query;
     let query = {};
-    
+
     if (category) query.category = category;
     if (gender) query.gender = gender;
     if (featured) query.featured = featured === 'true';
-    
+
     const products = await KidsProduct.find(query).sort({ order: 1, createdAt: -1 });
     res.json(products);
   } catch (error) {
@@ -47,10 +47,10 @@ exports.getActiveKidsProducts = async (req, res) => {
   try {
     const { category, gender } = req.query;
     let query = { isActive: true };
-    
+
     if (category) query.category = category;
     if (gender) query.gender = gender;
-    
+
     const products = await KidsProduct.find(query).sort({ order: 1, createdAt: -1 });
     res.json(products);
   } catch (error) {
@@ -80,10 +80,10 @@ exports.createKidsProduct = async (req, res) => {
     }
 
     const productData = { ...req.body };
-    
-    // Handle file uploads
+
+    // Handle file uploads (Cloudinary returns file.path as the URL)
     if (req.files && req.files.length > 0) {
-      productData.images = req.files.map(file => `/uploads/kids/${file.filename}`);
+      productData.images = req.files.map(file => file.path || file.url);
     }
 
     // Parse arrays if they come as strings
@@ -104,7 +104,7 @@ exports.createKidsProduct = async (req, res) => {
       `New Kids Product: ${product.title}`,
       `Auto-generated inquiry for new kids product "${product.title}". Category: ${product.category || 'Not specified'}, Gender: ${product.gender || 'Not specified'}, Price: ₹${product.price || 'Not specified'}. Created on ${new Date().toLocaleDateString()}. This product may need review or additional setup.`
     );
-    
+
     res.status(201).json({ message: 'Kids product created successfully', product });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -125,19 +125,21 @@ exports.updateKidsProduct = async (req, res) => {
     }
 
     const updateData = { ...req.body };
-    
+
     // Handle new file uploads
     if (req.files && req.files.length > 0) {
-      // Delete old images
+      // Delete old images (local only)
       if (product.images && product.images.length > 0) {
         product.images.forEach(img => {
-          const imgPath = path.join(__dirname, '..', img);
-          if (fs.existsSync(imgPath)) {
-            fs.unlinkSync(imgPath);
+          if (img.startsWith('/uploads/')) {
+            const imgPath = path.join(process.cwd(), img);
+            if (fs.existsSync(imgPath)) {
+              try { fs.unlinkSync(imgPath); } catch (e) { console.error('Local delete failed:', e); }
+            }
           }
         });
       }
-      updateData.images = req.files.map(file => `/uploads/kids/${file.filename}`);
+      updateData.images = req.files.map(file => file.path || file.url);
     }
 
     // Parse arrays if they come as strings
@@ -171,9 +173,11 @@ exports.deleteKidsProduct = async (req, res) => {
     // Delete associated images
     if (product.images && product.images.length > 0) {
       product.images.forEach(img => {
-        const imgPath = path.join(__dirname, '..', img);
-        if (fs.existsSync(imgPath)) {
-          fs.unlinkSync(imgPath);
+        if (img.startsWith('/uploads/')) {
+          const imgPath = path.join(process.cwd(), img);
+          if (fs.existsSync(imgPath)) {
+            try { fs.unlinkSync(imgPath); } catch (e) { console.error('Local delete failed:', e); }
+          }
         }
       });
     }

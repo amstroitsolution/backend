@@ -28,7 +28,7 @@ exports.getActiveBestSellers = async (req, res) => {
 exports.createBestSeller = async (req, res) => {
   try {
     const { title, description, price, originalPrice, rating, reviews, badge, discount, category, order, isActive } = req.body;
-    
+
     const bestsellerData = {
       title,
       description,
@@ -44,7 +44,7 @@ exports.createBestSeller = async (req, res) => {
     };
 
     if (req.files && req.files.length > 0) {
-      bestsellerData.images = req.files.map(file => `/uploads/bestsellers/${file.filename}`);
+      bestsellerData.images = req.files.map(file => file.path || file.url);
     }
 
     const bestseller = await BestSeller.create(bestsellerData);
@@ -79,16 +79,18 @@ exports.updateBestSeller = async (req, res) => {
     bestseller.isActive = isActive !== undefined ? isActive : bestseller.isActive;
 
     if (req.files && req.files.length > 0) {
-      // Delete old images
+      // Delete old images (local only)
       if (bestseller.images && bestseller.images.length > 0) {
         bestseller.images.forEach(img => {
-          const imagePath = path.join(__dirname, '..', img);
-          if (fs.existsSync(imagePath)) {
-            fs.unlinkSync(imagePath);
+          if (img.startsWith('/uploads/')) {
+            const imgPath = path.join(process.cwd(), img);
+            if (fs.existsSync(imgPath)) {
+              try { fs.unlinkSync(imgPath); } catch (e) { console.error('Local delete failed:', e); }
+            }
           }
         });
       }
-      bestseller.images = req.files.map(file => `/uploads/bestsellers/${file.filename}`);
+      bestseller.images = req.files.map(file => file.path || file.url);
     }
 
     await bestseller.save();
@@ -111,9 +113,11 @@ exports.deleteBestSeller = async (req, res) => {
     // Delete images
     if (bestseller.images && bestseller.images.length > 0) {
       bestseller.images.forEach(img => {
-        const imagePath = path.join(__dirname, '..', img);
-        if (fs.existsSync(imagePath)) {
-          fs.unlinkSync(imagePath);
+        if (img.startsWith('/uploads/')) {
+          const imagePath = path.join(process.cwd(), img);
+          if (fs.existsSync(imagePath)) {
+            try { fs.unlinkSync(imagePath); } catch (e) { console.error('Local delete failed:', e); }
+          }
         }
       });
     }

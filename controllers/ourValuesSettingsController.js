@@ -6,12 +6,12 @@ const OurValuesSettings = require('../models/OurValuesSettings');
 exports.getSettings = async (req, res) => {
   try {
     let settings = await OurValuesSettings.findOne();
-    
+
     // If no settings exist, create default
     if (!settings) {
       settings = await OurValuesSettings.create({});
     }
-    
+
     res.status(200).json(settings);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching settings', error: error.message });
@@ -31,23 +31,23 @@ exports.updateSettings = async (req, res) => {
       size: req.file.size,
       mimetype: req.file.mimetype
     } : 'No file uploaded');
-    
+
     let settings = await OurValuesSettings.findOne();
-    
+
     const updateData = { ...req.body };
-    
+
     // Handle file upload
     if (req.file) {
-      const imagePath = `/uploads/our-values/${req.file.filename}`;
+      const imagePath = req.file.path;
       updateData.sectionImage = imagePath;
-      console.log('✅ Image uploaded successfully:', imagePath);
+      console.log('✅ Image uploaded successfully to Cloudinary:', imagePath);
     } else if (req.body.sectionImageUrl) {
       updateData.sectionImage = req.body.sectionImageUrl;
       console.log('🔗 Using existing image URL:', req.body.sectionImageUrl);
     }
-    
+
     console.log('Update data:', updateData);
-    
+
     if (!settings) {
       // Create if doesn't exist
       settings = await OurValuesSettings.create(updateData);
@@ -61,7 +61,7 @@ exports.updateSettings = async (req, res) => {
       );
       console.log('✅ Updated existing settings:', settings);
     }
-    
+
     res.status(200).json(settings);
   } catch (error) {
     console.error('❌ Error updating Our Values settings:', error);

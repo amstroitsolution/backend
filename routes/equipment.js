@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Equipment = require('../models/Equipment');
+const { uploadGeneral } = require('../middleware/upload');
+const auth = require('../middleware/auth');
 
 // GET all active equipment
 router.get('/', async (req, res) => {
@@ -25,20 +27,28 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST create new equipment (admin)
-router.post('/', async (req, res) => {
+router.post('/', auth, uploadGeneral.single('image'), async (req, res) => {
   try {
-    const newItem = new Equipment(req.body);
+    const itemData = { ...req.body };
+    if (req.file) {
+      itemData.images = [req.file.path];
+    }
+    const newItem = new Equipment(itemData);
     await newItem.save();
-    res.status(201).json(newItem);
+    res.status(201).json({ message: 'Item created successfully', item: newItem });
   } catch (error) {
     res.status(400).json({ message: 'Error creating item', error: error.message });
   }
 });
 
 // PUT update equipment (admin)
-router.put('/:id', async (req, res) => {
+router.put('/:id', auth, uploadGeneral.single('image'), async (req, res) => {
   try {
-    const updated = await Equipment.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updateData = { ...req.body };
+    if (req.file) {
+      updateData.images = [req.file.path];
+    }
+    const updated = await Equipment.findByIdAndUpdate(req.params.id, updateData, { new: true });
     if (!updated) return res.status(404).json({ message: 'Item not found' });
     res.json(updated);
   } catch (error) {

@@ -68,8 +68,8 @@ exports.create = async (req, res) => {
 
     const mediaType = isVideo ? "video" : isImage ? "image" : "image";
 
-    const mediaUrl = `/uploads/watchbuy/${mediaFile.filename}`;
-    const thumbnailUrl = thumbFile ? `/uploads/watchbuy/${thumbFile.filename}` : (mediaType === "image" ? mediaUrl : "");
+    const mediaUrl = mediaFile.path;
+    const thumbnailUrl = thumbFile ? thumbFile.path : (mediaType === "image" ? mediaUrl : "");
 
     const item = await WatchBuy.create({
       title,
@@ -113,15 +113,14 @@ exports.update = async (req, res) => {
     if (mediaFile) {
       // remove old media file (if stored locally)
       if (existing.mediaUrl && existing.mediaUrl.startsWith("/uploads/")) removeFile(existing.mediaUrl);
-      const ext = path.extname(mediaFile.originalname).toLowerCase();
-      const isVideo = [".mp4", ".mov", ".webm", ".mkv"].includes(ext);
+      const isVideo = mediaFile.mimetype.startsWith('video/');
       updateData.mediaType = isVideo ? "video" : "image";
-      updateData.mediaUrl = `/uploads/watchbuy/${mediaFile.filename}`;
+      updateData.mediaUrl = mediaFile.path;
     }
 
     if (thumbFile) {
       if (existing.thumbnailUrl && existing.thumbnailUrl.startsWith("/uploads/")) removeFile(existing.thumbnailUrl);
-      updateData.thumbnailUrl = `/uploads/watchbuy/${thumbFile.filename}`;
+      updateData.thumbnailUrl = thumbFile.path;
     }
 
     const updated = await WatchBuy.findByIdAndUpdate(id, updateData, { new: true });

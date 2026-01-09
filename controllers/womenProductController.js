@@ -58,7 +58,10 @@ exports.getActiveWomenProducts = async (req, res) => {
     const { category, categorySlug, limit } = req.query;
     let query = { isActive: true };
 
-    if (category) query.category = category;
+    // Use regex for category to match partial strings (same as getAllWomenProducts)
+    if (category) {
+      query.category = { $regex: category.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
+    }
     if (categorySlug) query.categorySlug = categorySlug;
 
     let productsQuery = WomenProduct.find(query).sort({ order: 1, createdAt: -1 });
@@ -97,9 +100,9 @@ exports.createWomenProduct = async (req, res) => {
 
     const productData = { ...req.body };
 
-    // Handle file uploads
+    // Handle file uploads (Cloudinary returns file.path as the URL)
     if (req.files && req.files.length > 0) {
-      productData.images = req.files.map(file => `/uploads/women/${file.filename}`);
+      productData.images = req.files.map(file => file.path || file.url);
     }
 
     // Parse arrays if they come as strings
@@ -152,16 +155,20 @@ exports.updateWomenProduct = async (req, res) => {
     if (product.images && product.images.length > 0) {
       const removedImages = product.images.filter(img => !currentImages.includes(img));
       removedImages.forEach(img => {
-        const imgPath = path.join(process.cwd(), img);
-        if (fs.existsSync(imgPath)) {
-          fs.unlinkSync(imgPath);
+        // Only attempt to delete if it's a local path
+        if (img.startsWith('/uploads/')) {
+          const imgPath = path.join(process.cwd(), img);
+          if (fs.existsSync(imgPath)) {
+            try { fs.unlinkSync(imgPath); } catch (e) { console.error('Local delete failed:', e); }
+          }
         }
+        // Cloudinary deletion could be added here if needed
       });
     }
 
-    // Handle new file uploads
+    // Handle new file uploads (Cloudinary returns file.path as the URL)
     if (req.files && req.files.length > 0) {
-      const newImages = req.files.map(file => `/uploads/women/${file.filename}`);
+      const newImages = req.files.map(file => file.path || file.url);
       currentImages = [...currentImages, ...newImages];
     }
 
@@ -201,9 +208,11 @@ exports.deleteWomenProduct = async (req, res) => {
     // Delete associated images
     if (product.images && product.images.length > 0) {
       product.images.forEach(img => {
-        const imgPath = path.join(__dirname, '..', img);
-        if (fs.existsSync(imgPath)) {
-          fs.unlinkSync(imgPath);
+        if (img.startsWith('/uploads/')) {
+          const imgPath = path.join(process.cwd(), img);
+          if (fs.existsSync(imgPath)) {
+            try { fs.unlinkSync(imgPath); } catch (e) { console.error('Local delete failed:', e); }
+          }
         }
       });
     }

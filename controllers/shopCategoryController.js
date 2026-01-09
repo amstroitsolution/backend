@@ -24,7 +24,7 @@ exports.createCategory = async (req, res) => {
   try {
     const categoryData = { ...req.body };
     if (req.file) {
-      categoryData.image = `/uploads/shop-categories/${req.file.filename}`;
+      categoryData.image = req.file.path;
     }
     const category = await ShopCategory.create(categoryData);
     res.status(201).json(category);
@@ -43,11 +43,13 @@ exports.updateCategory = async (req, res) => {
       category[key] = req.body[key];
     });
     if (req.file) {
-      if (category.image) {
-        const oldPath = path.join(__dirname, '..', category.image);
-        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      if (category.image && category.image.startsWith('/uploads/')) {
+        const oldPath = path.join(process.cwd(), category.image);
+        if (fs.existsSync(oldPath)) {
+          try { fs.unlinkSync(oldPath); } catch (e) { console.error('Local delete failed:', e); }
+        }
       }
-      category.image = `/uploads/shop-categories/${req.file.filename}`;
+      category.image = req.file.path;
     }
     await category.save();
     res.json(category);
@@ -62,9 +64,11 @@ exports.deleteCategory = async (req, res) => {
     if (!category) {
       return res.status(404).json({ message: 'Category not found' });
     }
-    if (category.image) {
-      const imagePath = path.join(__dirname, '..', category.image);
-      if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
+    if (category.image && category.image.startsWith('/uploads/')) {
+      const imagePath = path.join(process.cwd(), category.image);
+      if (fs.existsSync(imagePath)) {
+        try { fs.unlinkSync(imagePath); } catch (e) { console.error('Local delete failed:', e); }
+      }
     }
     await category.deleteOne();
     res.json({ message: 'Category deleted successfully' });

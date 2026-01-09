@@ -13,7 +13,7 @@ exports.getAll = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const images = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
+    const images = req.files ? req.files.map(f => f.path || f.url) : [];
     const item = new FeaturedCollection({ ...req.body, images });
     await item.save();
     res.status(201).json(item);
@@ -24,10 +24,10 @@ exports.create = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    const newImages = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
+    const newImages = req.files ? req.files.map(f => f.path || f.url) : [];
     const existingImages = req.body.existingImages ? JSON.parse(req.body.existingImages) : [];
     const images = [...existingImages, ...newImages];
-    
+
     const item = await FeaturedCollection.findByIdAndUpdate(
       req.params.id,
       { ...req.body, images },
@@ -44,8 +44,12 @@ exports.delete = async (req, res) => {
     const item = await FeaturedCollection.findById(req.params.id);
     if (item && item.images) {
       item.images.forEach(img => {
-        const filePath = path.join(__dirname, '..', img);
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        if (img.startsWith('/uploads/')) {
+          const filePath = path.join(process.cwd(), img);
+          if (fs.existsSync(filePath)) {
+            try { fs.unlinkSync(filePath); } catch (e) { console.error('Local delete failed:', e); }
+          }
+        }
       });
     }
     await FeaturedCollection.findByIdAndDelete(req.params.id);

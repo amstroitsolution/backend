@@ -138,6 +138,11 @@ setTimeout(async () => {
   }
 }, 2000);
 
+// Health check
+app.get("/", (req, res) => {
+  res.send("✅ Yashper Backend is running successfully 🚀");
+});
+
 // ✅ Mount all API routes
 app.use("/api/services", servicesRoute);
 app.use("/api/equipment", equipmentRoutes);

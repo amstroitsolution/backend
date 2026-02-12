@@ -4,10 +4,10 @@ const TrendingItem = require('../models/TrendingItem');
 const NewArrival = require('../models/NewArrival');
 const { validationResult } = require('express-validator');
 const nodemailer = require('nodemailer');
-const { 
-  fallbackAdminNotification, 
-  fallbackCustomerConfirmation, 
-  fallbackReplyToCustomer 
+const {
+  fallbackAdminNotification,
+  fallbackCustomerConfirmation,
+  fallbackReplyToCustomer
 } = require('../services/fallbackEmailService');
 
 // Email configuration
@@ -29,7 +29,7 @@ const createTransporter = () => {
 // Get product details by type and ID
 const getProductDetails = async (productType, productId) => {
   let product;
-  
+
   // For hardcoded products (like from GownDressesSection), create a mock product
   if (typeof productId === 'string' && (productId.startsWith('gown') || productId.startsWith('best'))) {
     return {
@@ -40,7 +40,7 @@ const getProductDetails = async (productType, productId) => {
       images: []
     };
   }
-  
+
   try {
     switch (productType) {
       case 'KidsProduct':
@@ -129,7 +129,7 @@ const getProductDetails = async (productType, productId) => {
       images: []
     };
   }
-  
+
   return product || {
     _id: productId,
     title: 'Product',
@@ -143,15 +143,15 @@ const getProductDetails = async (productType, productId) => {
 const sendInquiryReplyEmail = async (inquiry, product, replyMessage, adminName = 'Yashiper Team') => {
   try {
     const transporter = createTransporter();
-    
+
     // Test the connection first
     await transporter.verify();
     console.log('SMTP connection verified for inquiry reply email');
-    
+
     const productTitle = product?.title || product?.name || 'Product';
     const productPrice = product?.price || 0;
     const productImage = product?.image || (product?.images && product?.images[0]) || null;
-    
+
     // Determine image URL
     let imageUrl = '';
     if (productImage) {
@@ -161,7 +161,7 @@ const sendInquiryReplyEmail = async (inquiry, product, replyMessage, adminName =
         imageUrl = `${process.env.BASE_URL || 'http://localhost:5000/'}${productImage}`;
       }
     }
-    
+
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: inquiry.customerEmail,
@@ -247,7 +247,7 @@ const sendInquiryReplyEmail = async (inquiry, product, replyMessage, adminName =
       code: error.code,
       command: error.command
     });
-    
+
     // Use fallback service
     console.log('Using fallback email service for inquiry reply...');
     return await fallbackReplyToCustomer(inquiry, replyMessage, adminName);
@@ -257,7 +257,7 @@ const sendInquiryReplyEmail = async (inquiry, product, replyMessage, adminName =
 // Send inquiry emails
 const sendInquiryEmails = async (inquiry, product, productData = null) => {
   const transporter = createTransporter();
-  
+
   // Use productData from frontend if available, otherwise use database product
   const displayProduct = productData || product;
   const productTitle = displayProduct.title || displayProduct.name || 'Product';
@@ -265,7 +265,7 @@ const sendInquiryEmails = async (inquiry, product, productData = null) => {
   const productImage = displayProduct.image || (displayProduct.images && displayProduct.images[0]) || null;
   const productDescription = displayProduct.description || '';
   const productCategory = displayProduct.category || '';
-  
+
   // Determine image URL
   let imageUrl = '';
   if (productImage) {
@@ -275,7 +275,7 @@ const sendInquiryEmails = async (inquiry, product, productData = null) => {
       imageUrl = `${process.env.BASE_URL || 'http://localhost:5000/'}${productImage}`; // Local image
     }
   }
-  
+
   // Email to customer
   const customerMailOptions = {
     from: process.env.EMAIL_USER,
@@ -446,7 +446,7 @@ const sendInquiryEmails = async (inquiry, product, productData = null) => {
 exports.createInquiry = async (req, res) => {
   try {
     console.log('Inquiry request body:', req.body);
-    
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       console.log('Validation errors:', errors.array());
@@ -476,11 +476,11 @@ exports.createInquiry = async (req, res) => {
 
     // Send emails with product data from frontend if available
     const emailSent = await sendInquiryEmails(inquiry, product, productData);
-    
-    res.status(201).json({ 
-      message: 'Inquiry submitted successfully', 
+
+    res.status(201).json({
+      message: 'Inquiry submitted successfully',
       inquiry,
-      emailSent 
+      emailSent
     });
   } catch (error) {
     console.error('Create inquiry error:', error);
@@ -493,14 +493,14 @@ exports.getAllInquiries = async (req, res) => {
   try {
     const { status, productType } = req.query;
     let query = {};
-    
+
     if (status) query.status = status;
     if (productType) query.productType = productType;
-    
+
     const inquiries = await Inquiry.find(query)
       .populate('productId')
       .sort({ createdAt: -1 });
-    
+
     res.json(inquiries);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -524,7 +524,7 @@ exports.getInquiryById = async (req, res) => {
 exports.updateInquiry = async (req, res) => {
   try {
     const { status, adminResponse } = req.body;
-    
+
     const updateData = {};
     if (status) updateData.status = status;
     if (adminResponse) {
@@ -554,6 +554,9 @@ exports.sendReplyToInquiry = async (req, res) => {
     const { id } = req.params;
     const { replyMessage, adminName } = req.body;
 
+    console.log('Received reply request for inquiry:', id);
+    console.log('Reply message:', replyMessage);
+
     if (!replyMessage || replyMessage.trim() === '') {
       return res.status(400).json({
         success: false,
@@ -570,36 +573,44 @@ exports.sendReplyToInquiry = async (req, res) => {
       });
     }
 
-    // Get product details for the reply
-    const product = await getProductDetails(inquiry.productType, inquiry.productId);
+    // Update inquiry status and add admin response FIRST
+    inquiry.status = 'responded';
+    inquiry.adminResponse = replyMessage.trim();
+    inquiry.respondedAt = new Date();
+    await inquiry.save();
 
-    // Send reply email
-    const emailSent = await sendInquiryReplyEmail(inquiry, product, replyMessage.trim(), adminName || 'Yashiper Team');
+    console.log('Inquiry updated successfully, now sending email in background...');
 
-    if (emailSent) {
-      // Update inquiry status and add admin response
-      inquiry.status = 'responded';
-      inquiry.adminResponse = replyMessage.trim();
-      inquiry.respondedAt = new Date();
-      await inquiry.save();
+    // Send email in background (non-blocking)
+    // This prevents the API from hanging while waiting for email service
+    setImmediate(async () => {
+      try {
+        const product = await getProductDetails(inquiry.productType, inquiry.productId);
+        const emailSent = await sendInquiryReplyEmail(inquiry, product, replyMessage.trim(), adminName || 'Yashiper Team');
 
-      res.status(200).json({
-        success: true,
-        message: 'Reply sent successfully',
-        data: inquiry
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        message: 'Failed to send reply email'
-      });
-    }
+        if (emailSent) {
+          console.log('Background email sent successfully for inquiry:', id);
+        } else {
+          console.error('Background email failed for inquiry:', id);
+        }
+      } catch (emailError) {
+        console.error('Background email error for inquiry:', id, emailError);
+      }
+    });
+
+    // Respond immediately to prevent frontend timeout
+    res.status(200).json({
+      success: true,
+      message: 'Reply saved successfully. Email is being sent in the background.',
+      data: inquiry
+    });
 
   } catch (error) {
     console.error('Send inquiry reply error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to send reply'
+      message: 'Failed to send reply',
+      error: error.message
     });
   }
 };
